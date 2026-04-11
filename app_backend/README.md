@@ -1,4 +1,6 @@
-# Prode - API Backend - Desarrollo de Software - TP2
+# Prode - API Backend
+
+**Introduccion al Desarrollo de Software - TP2**
 
 ## Requisitos
 
@@ -6,28 +8,48 @@
 - MySQL Server
 - pip
 
-## Instalación
+## Instalación y ejecución
 
-1. Clonar el repositorio
-2. Crear y activar el entorno virtual:
-   python3 -m venv venv
-   source venv/bin/activate
-3. Instalar dependencias:
-   pip install -r requirements.txt
-4. Crear usuario con pass: alumno123 y user: alumno:
-   sql
-   CREATE USER 'alumno'@'localhost' IDENTIFIED BY 'alumno123';
-   GRANT ALL PRIVILEGES ON *.* TO 'alumno'@'localhost';
-   FLUSH PRIVILEGES;
-   EXIT; 
-  
-      o cambiar las credenciales en constants.py
+### 1. Clonar el repositorio
 
-5. Crear la base de datos y cargar datos iniciales:
-   cd app_backend/db
-   python3 init_db.py
-   cd ..
-   Ejecutar:
-     python3 -m app_backend.app
+### 2. Entorno virtual y dependencias
 
- Y queda la API ejecutando en el puerto 5000
+Ejemplo creando `venv` dentro de `app_backend`:
+
+```bash
+cd app_backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cd ..
+```
+
+### 3. MySQL - usuario y permisos
+
+En MySQL como administrador, o cambiar credenciales en `app_backend/prode/constants.py`:
+
+```sql
+CREATE USER 'alumno'@'localhost' IDENTIFIED BY 'alumno123';
+GRANT ALL PRIVILEGES ON *.* TO 'alumno'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+### 4. Base de datos inicial
+
+Desde la **raiz del repo** (carpeta que contiene `app_backend`):
+
+```bash
+cd app_backend/db
+python3 init_db.py
+cd ../..
+```
+
+`init_db.py` abre `init_db.sql` en la misma carpeta (conviene ejecutar estos comandos para que el directorio de trabajo sea el correcto)
+
+### 5. Levantar la API
+
+Con el `venv` activado, desde la **raiz del repo**:
+
+```bash
+python3 -m app_backend.app
+```
