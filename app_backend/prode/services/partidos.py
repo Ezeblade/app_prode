@@ -29,7 +29,7 @@ def crear_partido(equipo_local: int, id_equipo_local: int, estadio: str, ciudad:
         (equipo_local, equipo_visitante, estadio, ciudad, fecha, fase, goles_local, goles_visitante),
     )
     conn.commit()
-    nuevo_partido = cur.lastrowid
+    nuevo_partido = cursor.lastrowid
     cur.close()
     conn.close()
     return nuevo_partido
