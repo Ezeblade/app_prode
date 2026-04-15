@@ -12,9 +12,9 @@ def listar_usuarios():
         return "", 204
     return jsonify({"usuarios":usuarios}),200
 
-@usuarios_bp.route("/<int:id>", methods =["GET"])
+@usuarios_bp.route("/<string:id>", methods =["GET"])
 def obtener_usuario_por_id(id):
-    if id < 1:
+    if  not id.isdigit() or int(id) < 1:
         return jsonify({
         "errors": [{
             "code": "BAD_REQUEST",
@@ -22,6 +22,7 @@ def obtener_usuario_por_id(id):
             "level": "error",
             }]
         }), 400
+    id = int(id)
     try:
         usuario_id = usuarios_service.obtener_usuario_por_id(id)
     except Exception as error:
@@ -77,3 +78,7 @@ def crear_usuario():
                 }]
             }), 500
     return "", 201
+
+@usuarios_bp.route("/", methods=["PUT"])
+def remplazar_datos_usuario_por_id():
+    return 201

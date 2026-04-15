@@ -46,3 +46,4 @@ def crear_usuario(nombre: str, email: str) -> int:
     cur.close()
     conn.close()
     return nuevo_usuario
+
