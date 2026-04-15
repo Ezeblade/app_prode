@@ -5,13 +5,18 @@ usuarios_bp = Blueprint("usuarios", __name__)
 
 # Endpoints Usuarios
 
-@usuarios_bp.route("/")
+@usuarios_bp.route("/", methods =["GET"])
 def listar_usuarios():
     usuarios = usuarios_service.listar_usuarios()
     if not usuarios:
         return "", 204
     return jsonify({"usuarios":usuarios}),200
 
+@usuarios_bp.route("/<init:id>", methods =["GET"])
+def obtener_usuario_por_id(id):
+    usuario_id = usuarios_service.obtener_usuario_por_id()
+    if usuario_id is None:
+        return jsonify({...}), 404
 
 @usuarios_bp.route("/", methods=["POST"])
 def crear_usuario():
