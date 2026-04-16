@@ -61,3 +61,8 @@ def crear_partido():
                 "level": "error",
             }]
         }), 500
+
+@partidos_bp.route("/<int:id_partido>", methods=["GET"])
+def obtener_detalle_partido(id_partido):
+    partido = partidos_service.obtener_detalle_partido(id_partido)
+    

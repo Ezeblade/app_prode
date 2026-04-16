@@ -33,3 +33,27 @@ def crear_partido(equipo_local: int, equipo_visitante: int, estadio: str, ciudad
     cursor.close()
     conn.close()
     return nuevo_partido
+
+def obtener_detalle_partido(id_partido: int):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT partido.id,
+               equipo_local.nombre,
+               equipo_visitante.nombre,
+               partido.estadio,
+               partido.ciudad,
+               partido.fecha_partido,
+               partido.fase_torneo,
+               partido.goles_local,
+               partido.goles_visitante
+        FROM partido 
+        JOIN equipo equipo_local ON partido.id_equipo_local = equipo_local.id
+        JOIN equipo equipo_visitante ON partido.id_equipo_visitante = equipo_visitante.id
+        WHERE partido.id = %s
+    """, (id_partido,)
+    )
+    partido = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return partido
