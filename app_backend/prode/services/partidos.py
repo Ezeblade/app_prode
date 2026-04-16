@@ -19,7 +19,7 @@ def listar_partidos():
     return partidos
 
 
-def crear_partido(equipo_local: int, id_equipo_local: int, estadio: str, ciudad: str, fecha: str, fase: str, goles_local: int, goles_visitante: int) -> int:
+def crear_partido(equipo_local: int, equipo_visitante: int, estadio: str, ciudad: str, fecha: str, fase: str, goles_local: int, goles_visitante: int) -> int:
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
@@ -30,6 +30,6 @@ def crear_partido(equipo_local: int, id_equipo_local: int, estadio: str, ciudad:
     )
     conn.commit()
     nuevo_partido = cursor.lastrowid
-    cur.close()
+    cursor.close()
     conn.close()
     return nuevo_partido
