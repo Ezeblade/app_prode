@@ -75,3 +75,13 @@ def reemplazar_datos_usuario_por_id(id_usuario: int, nombre: str, email: str) ->
     conn.commit()
     cursor.close()
     conn.close()
+
+def eliminar_usuario_por_id(id_usuario: int) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM usuario WHERE id = %s", (id_usuario,))
+    conn.commit()
+    eliminado = cursor.rowcount > 0
+    cursor.close()
+    conn.close()
+    return eliminado

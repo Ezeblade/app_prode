@@ -50,5 +50,5 @@ cd ..
 Con el `venv` activado, desde la **raiz del repo**:
 
 ```bash
-python3 -m app.py
+python3 -m app
 ```
