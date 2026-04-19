@@ -133,3 +133,43 @@ def reemplazar_datos_usuario_por_id(id):
                 }]
             }), 500
     return "", 204
+
+@usuarios_bp.route('/<string:id>', methods=['DELETE'])
+def eliminar_usuario_por_id(id):
+    if  not id.isdigit() or int(id) < 1:
+        return jsonify({
+        "errors": [{
+            "code": "BAD_REQUEST",
+            "message": "El id debe ser un entero positivo",
+            "level": "error",
+            }]
+        }), 400
+    id = int(id)
+    try:
+        eliminado = usuarios_service.eliminar_usuario_por_id(id)
+    except mysql.connector.errors.IntegrityError:
+        return jsonify({
+            "errors": [{
+                "code": "CONFLICT",
+                "message": "NO se puede eliminar el usuario porque tiene datos asociados",
+                "level": "error",
+            }]
+        }), 409
+    except Exception as error:
+            print(f"error inesperado al crear partido:{str(error)}")
+            return jsonify({
+                "errors": [{
+                    "code": "InternalServerError",
+                    "message": "error al procesar la solicitud",
+                    "level": "error",
+                }]
+            }), 500
+    if not eliminado:
+         return jsonify({
+                "errors": [{
+                    "code": "NOT_FOUND",
+                    "message": "Usuario no encontrado",
+                    "level": "error",
+                }]
+            }), 404
+    return "", 204
