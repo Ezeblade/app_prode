@@ -159,7 +159,7 @@ def actualizar_partido(id):
         }), 400 
 
     try:
-        resultado = partidos_service.actualizar_partido_put(id, equipo_local, equipo_visitante, fecha, fase)
+        resultado = partidos_service.actualizar_partido(id, equipo_local, equipo_visitante, fecha, fase)
         if not resultado:
             return jsonify({
                 "errors": [{
