@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 import mysql.connector
 from prode.services import partidos as partidos_service
 from prode.pagination import parse_pagination_args, build_hateoas_links
+from prode.validators import partidos as partidos_validators
 # EJEMPLO cuando usen validar o servicios 
 #from app_backend.prode.validators.partidos import validar_listado_partidos
 #from app_backend.prode.services.partidos import listar_partidos
@@ -14,6 +15,18 @@ partidos_bp = Blueprint("partidos", __name__)
 def listar_partidos():
     try:
         limit, offset = parse_pagination_args(request.args)
+        total = partidos_service.contar_partidos()
+        if total == 0:
+            return "", 204
+        partidos = partidos_service.listar_partidos(limit, offset)
+        base_path = request.url_root.rstrip("/") + (request.path or "/")
+        links = build_hateoas_links(
+            base_path=base_path,
+            limit=limit,
+            offset=offset,
+            total=total,
+        )
+        return jsonify({"partidos": partidos, "_links": links}), 200
     except ValueError as e:
         return jsonify({
             "errors": [{
@@ -22,18 +35,15 @@ def listar_partidos():
                 "level": "error",
             }]
         }), 400
-    total = partidos_service.contar_partidos()
-    if total == 0:
-        return "", 204
-    partidos = partidos_service.listar_partidos(limit, offset)
-    base_path = request.url_root.rstrip("/") + (request.path or "/")
-    links = build_hateoas_links(
-        base_path=base_path,
-        limit=limit,
-        offset=offset,
-        total=total,
-    )
-    return jsonify({"partidos": partidos, "_links": links}), 200
+    except Exception as error:
+        print(f"error inesperado al crear partido:{str(error)}")
+        return jsonify({
+            "errors": [{
+                "code": "InternalServerError",
+                "message": "error al procesar la solicitud",
+                "level": "error",
+            }]
+        }), 500
 
 
 
@@ -48,11 +58,11 @@ def crear_partido():
     fase = data.get("fase_torneo")
     goles_local = data.get("goles_local")
     goles_visitante = data.get("goles_visitante")
-    if not equipo_local or not equipo_visitante or not fecha or not fase:
+    if not equipo_local or not equipo_visitante or not fecha or not fase or not estadio or not ciudad:
         return jsonify({
             "errors": [{
                 "code": "BAD_REQUEST",
-                "message": "equipo_local, equipo_visitante, fecha y fase son obligatorios",
+                "message": "equipo_local, equipo_visitante, fecha, fase, estadio y ciudad son obligatorios",
                 "level": "error",
             }]
         }), 400
@@ -82,27 +92,43 @@ def crear_partido():
             }]
         }), 500
 
-@partidos_bp.route("/<string:id_partido>", methods=["GET"])
-def obtener_detalle_partido(id_partido):
-    if not id_partido.isdigit() or int(id_partido) < 1:
+@partidos_bp.route("/<string:id>", methods=["DELETE"])
+def eliminar_partido(id):
+    error = partidos_validators.validar_id_entero_positivo(id)
+    if error:
+        return error
+    id = int(id)
+    try:
+        partido_eliminado = partidos_service.eliminar_partido(id)
+    except Exception as error:
+        print(f"error inesperado al buscar partido:{str(error)}")
         return jsonify({
-        "errors": [{
-            "code": "BAD_REQUEST",
-            "message": "El id debe ser un entero positivo",
-            "level": "error",
+            "errors": [{
+                "code": "InternalServerError",
+                "message": "error al procesar la solicitud",
+                "level": "error",
             }]
-        }), 400
-    id_partido = int(id_partido)
-    if not id_partido:
+        }), 500
+    if partido_eliminado is False:
             return jsonify({
                 "errors": [{
-                    "code": "BAD_REQUEST",
-                    "message": "id_partido es obligatorio para obtener el detalle del partido",
+                    "code": "NOT_FOUND",
+                    "message": "partido no encontrado",
                     "level": "error",
                 }]
-    }), 400 # 400 CUANDO NO SE INGRESA EL ID, ES OBLIGATORIO.
+        }), 404
+    else:
+        return "", 204 
+
+
+@partidos_bp.route("/<string:id>", methods=["GET"])
+def obtener_detalle_partido(id):
+    error = partidos_validators.validar_id_entero_positivo(id)
+    if error:
+        return error
+    id = int(id)
     try:
-        partido = partidos_service.obtener_detalle_partido(id_partido)
+        partido = partidos_service.obtener_detalle_partido(id)
         if partido is None:
             return jsonify({
                 "errors": [{
@@ -181,36 +207,61 @@ def actualizar_partido(id):
 
     return "", 204
 #PATCH 
-@partidos_bp.route("/<int:id>", methods=["PATCH"])
+@partidos_bp.route("/<string:id>", methods=["PATCH"])
 def actualizar_partido_parcial(id):
-    data = request.get_json()
+    data = request.get_json()  
+    error = partidos_validators.validar_id_entero_positivo(id)
+    if error:
+        return error
+    id = int(id)
+    if data is None:
+        return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": "No se enviaron datos",
+                "level": "error",
+            }]
+        }), 400   
 
-    if not data:
-        return {"error": "No se enviaron datos"}, 400
-
-    resultado = partidos_service.actualizar_partido_patch(id, data)
-
+    try:
+        resultado = partidos_service.actualizar_partido_patch(id, data)
+    except Exception as error:
+        print(f"error inesperado: {error}")
+        return jsonify({
+            "errors": [{
+                "code": "InternalServerError",
+                "message": "error al procesar la solicitud",
+                "level": "error",
+            }]
+        }), 500
     if resultado == "NOT_FOUND":
-        return {"error": "Partido no encontrado"}, 404 
+        return jsonify({
+            "errors": [{
+                "code": "NOT_FOUND",
+                "message": "Partido no encontrado",
+                "level": "error",
+            }]
+        }), 404
 
     if not resultado:
-        return {"error": "No se pudo actualizar"}, 400 
+        return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": "No se pudo actualizar",
+                "level": "error",
+            }]
+        }), 400   
 
     return "", 204
+
 
     
    
 @partidos_bp.route("/<string:id>/resultado", methods=["PUT"])
 def cargar_o_actualizar_resultado(id):
-    if not id.isdigit() or int(id) < 1:
-        return jsonify({
-            "errors": [{
-                "code": "BAD_REQUEST",
-                "message": "El id del partido debe ser un entero positivo",
-                "level": "error",
-            }]
-        }), 400
-
+    error = partidos_validators.validar_id_entero_positivo(id)
+    if error:
+        return error
     id = int(id)
     data = request.get_json(silent=True) or {}
     goles_local = data.get("goles_local")
