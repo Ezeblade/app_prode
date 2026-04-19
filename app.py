@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 
 app.register_blueprint(partidos_bp, url_prefix="/partidos")
-app.register_blueprint(prediccion_bp, url_prefix="/predicciones")
+app.register_blueprint(prediccion_bp, url_prefix="/partidos")
 app.register_blueprint(usuarios_bp, url_prefix="/usuarios")
 app.register_blueprint(ranking_bp, url_prefix="/ranking")
 
