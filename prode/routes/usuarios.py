@@ -31,6 +31,7 @@ def listar_usuarios():
     )
     return jsonify({"usuarios": usuarios, "_links": links}), 200
 
+
 @usuarios_bp.route("/<string:id>", methods =["GET"])
 def obtener_usuario_por_id(id):
     if  not id.isdigit() or int(id) < 1:
@@ -123,7 +124,7 @@ def reemplazar_datos_usuario_por_id(id):
             }]
         }), 409
     except Exception as error:
-            print(f"error inesperado al crear partido:{str(error)}")
+            print(f"error inesperado al remplzar datos:{str(error)}")
             return jsonify({
                 "errors": [{
                     "code": "InternalServerError",
