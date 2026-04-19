@@ -78,7 +78,7 @@ def eliminar_partido(id_partido:int):
     conn.commit()
     cursor.close()
     conn.close()
-    return True
+    return cursor.rowcount > 0 
 
 #Obtener ID de equipo
 def obtener_id_equipo(nombre):
