@@ -1,13 +1,6 @@
 <h1 align="center">Prode API Backend</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/Flask-API-111111?style=for-the-badge&logo=flask&logoColor=white" alt="Flask" />
-  <img src="https://img.shields.io/badge/MySQL-Server-00758F?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
-  <img src="https://img.shields.io/badge/Status-TP_Activo-2EA043?style=for-the-badge" alt="Status" />
-</p>
-
-<p align="center">
   Trabajo practico de Introduccion al Desarrollo de Software
 </p>
 
