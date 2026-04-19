@@ -72,19 +72,10 @@ def listar_partidos(limit: int, offset: int, filtros=None):
             query += " AND p.fase_torneo = %s"
             params.append(filtros["fase"])
         
-        # Filtro por estado
-        if "estado" in filtros:
-            query += " AND p.estado = %s"
-            params.append(filtros["estado"])
-        
-        # Filtro por ciudad
-        if "ciudad" in filtros:
-            query += " AND p.ciudad LIKE %s"
-            params.append(f"%{filtros['ciudad']}%")
     
     query += " ORDER BY p.fecha_partido ASC LIMIT %s OFFSET %s"
     params.extend([limit, offset])
-    
+    {}
     cursor.execute(query, params)
     partidos = cursor.fetchall()
     cursor.close()
