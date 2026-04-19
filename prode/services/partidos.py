@@ -170,3 +170,21 @@ def actualizar_partido_patch(id, data):
     conn.close()
 
     return True  
+
+
+def cargar_o_actualizar_resultado(id_partido, goles_local, goles_visitante):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        UPDATE partido 
+        SET goles_local = %s, goles_visitante = %s
+        WHERE id = %s
+        """, 
+        (goles_local,goles_visitante,id_partido),
+    )
+    conn.commit()
+    ok = cursor.rowcount > 0
+    cursor.close()
+    conn.close()
+    return ok

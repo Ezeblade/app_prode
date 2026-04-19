@@ -182,17 +182,6 @@ def actualizar_partido(id):
                 "level": "error",
             }]
     }), 400
-
-    campos_obligatorios = ["equipo_local", "equipo_visitante", "fecha", "fase"]
-    for campo in campos_obligatorios:
-        if campo not in data and campo is None:
-            return jsonify({
-            "errors": [{
-                "code": "BAD_REQUEST",
-                "message": "Los equipos no pueden ser iguales",
-                "level": "error",
-                }]
-        }), 400 
     if equipo_local == equipo_visitante:
         return jsonify({
             "errors": [{
@@ -203,7 +192,7 @@ def actualizar_partido(id):
         }), 400 
 
     try:
-        resultado = partidos_service.actualizar_partido_put(id, equipo_local, equipo_visitante, fecha, fase)
+        resultado = partidos_service.actualizar_partido(id, equipo_local, equipo_visitante, fecha, fase)
         if not resultado:
             return jsonify({
                 "errors": [{
@@ -244,3 +233,61 @@ def actualizar_partido_parcial(id):
 
     
    
+@partidos_bp.route("/<string:id>/resultado", methods=["PUT"])
+def cargar_o_actualizar_resultado(id):
+    if not id.isdigit() or int(id) < 1:
+        return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": "El id del partido debe ser un entero positivo",
+                "level": "error",
+            }]
+        }), 400
+
+    id = int(id)
+    data = request.get_json(silent=True) or {}
+    goles_local = data.get("goles_local")
+    goles_visitante = data.get("goles_visitante")
+
+    try:
+        gl = int(goles_local)
+        gv = int(goles_visitante)
+
+    except (TypeError, ValueError):
+        return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": "goles_local y goles_visitante deben ser enteros",
+                "level": "error",
+            }]
+        }), 400
+
+    if gl < 0 or gv < 0:
+        return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": "Los goles no pueden ser negativos",
+                "level": "error",
+            }]
+        }), 400
+    try:
+        ok = partidos_service.cargar_o_actualizar_resultado(id, gl, gv)
+    except Exception as error:
+        print(f"error inesperado al actualizar resultado: {error}")
+        return jsonify({
+            "errors": [{
+                "code": "InternalServerError",
+                "message": "error al procesar la solicitud",
+                "level": "error",
+            }]
+        }), 500
+    if not ok:
+        return jsonify({
+            "errors": [{
+                "code": "NOT_FOUND",
+                "message": "Partido no encontrado",
+                "level": "error",
+            }]
+        }), 404
+    return "", 204 
+

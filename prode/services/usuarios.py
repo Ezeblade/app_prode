@@ -26,7 +26,6 @@ def listar_usuarios(limit: int, offset: int):
     cursor.close()
     conn.close()
     return usuarios
-
 def obtener_usuario_por_id(usuario_id):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
