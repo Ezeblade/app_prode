@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 import mysql.connector
 from prode.services import partidos as partidos_service
+from prode.pagination import parse_pagination_args, build_hateoas_links
 # EJEMPLO cuando usen validar o servicios 
 #from app_backend.prode.validators.partidos import validar_listado_partidos
 #from app_backend.prode.services.partidos import listar_partidos
@@ -11,10 +12,30 @@ partidos_bp = Blueprint("partidos", __name__)
 
 @partidos_bp.route("/")
 def listar_partidos():
-    partidos = partidos_service.listar_partidos()
-    if not partidos:
+    try:
+        limit, offset = parse_pagination_args(request.args)
+    except ValueError as e:
+        return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": str (e),
+                "level": "error",
+            }]
+        }), 400
+    total = partidos_service.contar_partidos()
+    if total == 0:
         return "", 204
-    return jsonify(partidos)
+    partidos = partidos_service.listar_partidos(limit, offset)
+    base_path = request.url_root.rstrip("/") + (request.path or "/")
+    links = build_hateoas_links(
+        base_path=base_path,
+        limit=limit,
+        offset=offset,
+        total=total,
+    )
+    return jsonify({"partidos": partidos, "_links": links}), 200
+
+
 
 @partidos_bp.route("/", methods=["POST"])
 def crear_partido():
@@ -103,35 +124,73 @@ def obtener_detalle_partido(id_partido):
         
     
    #PUT
-@partidos_bp.route("/<int:id>", methods=["PUT"])
+@partidos_bp.route("/<string:id>", methods=["PUT"])
 def actualizar_partido(id):
-    data = request.get_json() 
-    if not data:
-        return {"error": "No se enviaron datos"}, 400
-        
-    campos_obligatorios = ["equipo_local", "equipo_visitante", "fecha", "fase"] 
+    data = request.get_json(silent=True) or {}
+    equipo_local = data.get("equipo_local")
+    equipo_visitante = data.get("equipo_visitante")
+    fecha = data.get("fecha")
+    fase = data.get("fase")
+    if  not id.isdigit() or int(id) < 1:
+        return jsonify({
+        "errors": [{
+            "code": "BAD_REQUEST",
+            "message": "El id debe ser un entero positivo",
+            "level": "error",
+            }]
+        }), 400
+    id = int(id)
+   
+    if  not equipo_local or not equipo_visitante or not fecha or not fase :
+        return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": "Faltan datos",
+                "level": "error",
+            }]
+    }), 400
 
+    campos_obligatorios = ["equipo_local", "equipo_visitante", "fecha", "fase"]
     for campo in campos_obligatorios:
-        if campo not in data:
-               return {"error": f"Falta {campo}"}, 400
-        
-    equipo_local = data["equipo_local"]
-    equipo_visitante = data["equipo_visitante"]
-
+        if campo not in data and campo is None:
+            return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": "Los equipos no pueden ser iguales",
+                "level": "error",
+                }]
+        }), 400 
     if equipo_local == equipo_visitante:
-         return {"error": "Los equipos no pueden ser iguales"}, 400 
+        return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": "Los equipos no pueden ser iguales",
+                "level": "error",
+                }]
+        }), 400 
 
-    resultado = partidos_service.actualizar_partido_put(
-        id,
-        data["equipo_local"],
-        data["equipo_visitante"],
-        data["fecha"],
-        data["fase"]
-    )
-    if not resultado: 
-        return {"error": "No se pudo actualizar el partido"}, 400        
-    return "", 204 
+    try:
+        resultado = partidos_service.actualizar_partido_put(id, equipo_local, equipo_visitante, fecha, fase)
+        if not resultado:
+            return jsonify({
+                "errors": [{
+                    "code": "BAD_REQUEST",
+                    "message": "No hubieron cambios",
+                    "level": "error",
+                    }]
+            }), 400    
+    except Exception as error:
+        print(f"error inesperado al buscar partido:{str(error)}")
+        return jsonify({
+            "errors": [{
+                "code": "InternalServerError",
+                "message": "error al procesar la solicitud",
+                "level": "error",
+            }]
+        }), 500
+    
 
+    return "", 204
 #PATCH 
 @partidos_bp.route("/<int:id>", methods=["PATCH"])
 def actualizar_partido_parcial(id):

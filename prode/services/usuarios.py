@@ -1,17 +1,27 @@
 from prode.db import get_connection
 
-def listar_usuarios():
+def contar_usuarios():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM usuario")
+    total = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+    return total
 
+
+def listar_usuarios(limit: int, offset: int):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
         """
-        SELECT id, nombre_usuario 
-        FROM usuario 
+        SELECT id, nombre_usuario AS nombre
+        FROM usuario
         ORDER BY id
-        """
+        LIMIT %s OFFSET %s
+        """,
+        (limit, offset),
     )
-
     usuarios = cursor.fetchall()
     cursor.close()
     conn.close()

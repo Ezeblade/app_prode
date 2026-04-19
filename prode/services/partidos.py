@@ -1,6 +1,15 @@
 from prode.db import get_connection
 
-def listar_partidos():
+def contar_partidos():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM partido")
+    total = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+    return total
+
+def listar_partidos(limit: int, offset: int):
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
@@ -12,7 +21,11 @@ def listar_partidos():
         FROM partido p
         JOIN equipo el ON p.id_equipo_local = el.id
         JOIN equipo ev ON p.id_equipo_visitante = ev.id
-    """)
+        ORDER BY p.id
+        LIMIT %s OFFSET %s
+        """,
+        (limit, offset),
+        )
     partidos = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -39,8 +52,8 @@ def obtener_detalle_partido(id_partido: int):
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
         SELECT partido.id,
-               equipo_local.nombre,
-               equipo_visitante.nombre,
+               equipo_local.nombre AS equipo_local,
+               equipo_visitante.nombre AS equipo_visitante,
                partido.estadio,
                partido.ciudad,
                partido.fecha_partido,
@@ -67,49 +80,43 @@ def eliminar_partido(id_partido:int):
     conn.close()
     return True
 
-#Obtener nombre de equipo
-def obtener_id_equipo(nombre): 
-    conn = get_connection() 
-    cursor = conn.cursor() 
-    cursor.execute("SELECT id FROM equipo WHERE nombre = %s", (nombre,)) 
-    resultado = cursor.fetchone() 
-    cursor.close() 
-    conn.close() 
-    
-    return resultado[0] if resultado else None 
+#Obtener ID de equipo
+def obtener_id_equipo(nombre):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM equipo WHERE nombre = %s", (nombre,))
+    resultado = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return resultado[0] if resultado else None
 
 
-
-
-#PUT
-
-def actualizar_partido_put(id, equipo_local, equipo_visitante, fecha, fase): 
+def actualizar_partido(id, equipo_local, equipo_visitante, fecha, fase):
     id_local = obtener_id_equipo(equipo_local)
     id_visitante = obtener_id_equipo(equipo_visitante)
 
     if not id_local or not id_visitante:
-        return False 
+        return False
 
-    conn = get_connection() 
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
-     """ 
+        """
         UPDATE partido
         SET id_equipo_local = %s,
             id_equipo_visitante = %s,
             fecha_partido = %s,
             fase_torneo = %s
         WHERE id = %s
-    """ 
-    (id_local, id_visitante, fecha, fase, id)
+        """,
+        (id_local, id_visitante, fecha, fase, id)
     )
-    conn.commit() 
-    
-    filas = cursor.rowcount 
+    conn.commit()
+
+    filas = cursor.rowcount
     cursor.close()
     conn.close()
     return filas > 0
-
 #PATCH 
 def actualizar_partido_patch(id, data):
     partes = []
