@@ -1,16 +1,35 @@
 from flask import Blueprint, jsonify, request
 import mysql.connector
 from prode.services import usuarios as usuarios_service
+from prode.pagination import parse_pagination_args, build_hateoas_links
 usuarios_bp = Blueprint("usuarios", __name__)
 
 # Endpoints Usuarios
 
-@usuarios_bp.route("/", methods =["GET"])
+@usuarios_bp.route("/", methods=["GET"])
 def listar_usuarios():
-    usuarios = usuarios_service.listar_usuarios()
-    if not usuarios:
+    try:
+        limit, offset = parse_pagination_args(request.args)
+    except ValueError as e:
+        return jsonify({
+            "errors": [{
+                "code": "BAD_REQUEST",
+                "message": str (e),
+                "level": "error",
+              }]
+        }), 400
+    total = usuarios_service.contar_usuarios()
+    if total == 0:
         return "", 204
-    return jsonify({"usuarios":usuarios}),200
+    usuarios = usuarios_service.listar_usuarios(limit, offset)
+    base_path = request.url_root.rstrip("/") + (request.path or "/")
+    links = build_hateoas_links(
+        base_path=base_path,
+        limit=limit,
+        offset=offset,
+        total=total,
+    )
+    return jsonify({"usuarios": usuarios, "_links": links}), 200
 
 @usuarios_bp.route("/<string:id>", methods =["GET"])
 def obtener_usuario_por_id(id):
