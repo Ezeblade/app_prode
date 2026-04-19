@@ -149,17 +149,6 @@ def actualizar_partido(id):
                 "level": "error",
             }]
     }), 400
-
-    campos_obligatorios = ["equipo_local", "equipo_visitante", "fecha", "fase"]
-    for campo in campos_obligatorios:
-        if campo not in data and campo is None:
-            return jsonify({
-            "errors": [{
-                "code": "BAD_REQUEST",
-                "message": "Los equipos no pueden ser iguales",
-                "level": "error",
-                }]
-        }), 400 
     if equipo_local == equipo_visitante:
         return jsonify({
             "errors": [{
