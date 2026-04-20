@@ -82,7 +82,7 @@ Esto crea la base `prode`, tablas y datos de ejemplo definidos en `db/init_db.sq
 Con el entorno virtual activado y desde `app_prode`:
 
 ```bash
-python3 app.py
+python3 -m app
 ```
 
 Base URL:
