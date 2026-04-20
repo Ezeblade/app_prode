@@ -85,7 +85,7 @@ def eliminar_partido(id_partido:int):
 #Obtener ID de equipo
 def obtener_id_equipo(nombre):
     conn = get_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(buffered = True)
     cursor.execute("SELECT id FROM equipo WHERE nombre = %s", (nombre,))
     resultado = cursor.fetchone()
     cursor.close()
