@@ -2,7 +2,6 @@ from prode.db import get_connection
 
 
 def contar_usuarios_ranking() -> int:
-    """Total de filas del ranking (un renglÃ³n por usuario)."""
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM usuario")
@@ -13,13 +12,6 @@ def contar_usuarios_ranking() -> int:
 
 
 def listar_ranking(limit: int, offset: int):
-    """
-    Ranking: id_usuario y puntos acumulados.
-    Puntos por partido con resultado cargado:
-      - Marcador exacto: 3
-      - Mismo desenlace (local, visitante o empate) pero marcador distinto: 1
-      - Resto: 0
-    """
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute(
